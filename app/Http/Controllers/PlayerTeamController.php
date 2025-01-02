@@ -5,44 +5,31 @@ namespace App\Http\Controllers;
 use App\Models\Player;
 use App\Models\Team;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PlayerTeamController extends Controller
 {
-    public function store(Request $request)
+    public function updateOrder(Request $request)
     {
-        // Validate input
         $request->validate([
-            'player_id' => 'required|exists:players,id',
-            'team_id' => 'required|exists:teams,id',
+            'teams' => 'required|array',
+            'teams.*.team_id' => 'required|exists:teams,id',
+            'teams.*.players' => 'required|array',
+            'teams.*.players.*.player_id' => 'required|exists:players,id',
+            'teams.*.players.*.sort_order' => 'required|integer',
         ]);
 
-        $player = Player::find($request->player_id);
-        $team = Team::find($request->team_id);
+        foreach ($request->teams as $teamData) {
+            $team = Team::find($teamData['team_id']);
 
-        // Attach the player to the team
-        $team->players()->attach($player);
+            $syncData = [];
+            foreach ($teamData['players'] as $playerData) {
+                $syncData[$playerData['player_id']] = ['sort_order' => $playerData['sort_order']];
+            }
 
-        return response()->json([
-            'message' => 'Player successfully added to team!',
-        ]);
-    }
+            $team->players()->sync($syncData);
+        }
 
-    public function remove(Request $request)
-    {
-        // Validate input
-        $request->validate([
-            'player_id' => 'required|exists:players,id',
-            'team_id' => 'required|exists:teams,id',
-        ]);
-
-        $player = Player::find($request->player_id);
-        $team = Team::find($request->team_id);
-
-        // Detach the player from the team
-        $team->players()->detach($player);
-
-        return response()->json([
-            'message' => 'Player successfully removed from team!',
-        ]);
+        return response()->json(['message' => 'Teams and players saved successfully.']);
     }
 }

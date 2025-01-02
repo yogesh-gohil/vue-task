@@ -31,37 +31,36 @@ async function fetchData() {
 
 }
 
-async function onDropPlayer(evt, team) {
-    const { added, removed } = evt
+async function saveTeams() {
+    try {
+        const payload = teams.value.map(team => ({
+            team_id: team.id,
+            players: team.players.map((player, index) => ({
+                player_id: player.id,
+                sort_order: index,
+            })),
+        }));
 
-    if (added) {
-        try {
-            await axios.post('api/save-player-team', {
-                player_id: added.element.id,
-                team_id: team.id,
-            })
-        } catch (error) {
-            console.error('Error saving to database:', error)
-        }
-    }
+        await axios.post('/api/save-teams-players', { teams: payload });
 
-    if (removed) {
-        try {
-            await axios.post('api/remove-player-team', {
-                player_id: removed.element.id,
-                team_id: team.id,
-            })
-        } catch (error) {
-            console.error('Error removing from database:', error)
-        }
+        alert('Teams and players saved successfully!');
+    } catch (error) {
+        console.error('Error saving teams and players:', error);
+        alert('Failed to save teams and players.');
     }
 }
 </script>
 
 <template>
     <div class="flex justify-center">
+
         <div class="w-2/3 h-full">
-            <h2 class="text-lg font-semibold">Players</h2>
+            <div class="flex justify-between">
+                <h2 class="text-lg font-semibold">Players</h2>
+                <button class="bg-indigo-500 p-2 text-white mt-2 rounded-md" @click="saveTeams">
+                    Save
+                </button>
+            </div>
             <div class="w-full h-1/2 p-4">
                 <draggable
                     v-model="players"
@@ -94,8 +93,6 @@ async function onDropPlayer(evt, team) {
                                 v-model="team.players"
                                 group="teams"
                                 item-key="id"
-                                @change="(evt) => onDropPlayer(evt, team)"
-
                                 >
                                 <template #item="{ element }">
                                     <SingleTeam :key="element.id" :team="element" />
