@@ -1,9 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import SingleTeam from './SingleTeam.vue'
-import SinglePlayer from './SinglePlayer.vue'
-
-import draggable from 'vuedraggable'
+import PlayersList from './PlayersList.vue'
+import TeamList from './TeamList.vue'
 import axios from 'axios'
 
 const players = ref([])
@@ -33,15 +31,18 @@ async function fetchData() {
 
 async function saveTeams() {
     try {
-        const payload = teams.value.map(team => ({
-            team_id: team.id,
-            players: team.players.map((player, index) => ({
-                player_id: player.id,
-                sort_order: index,
-            })),
-        }));
+        const payload = [];
 
-        await axios.post('/api/save-teams-players', { teams: payload });
+        teams.value.forEach((team,index) => {
+            payload[index] = {'team_id': team.id, players: []}
+            let obj = {}
+            team.players.forEach((player, p_index) => {
+                obj[player.id] = {sort_order: p_index}
+                payload[index]['players'] = {... obj } ?? []
+            })
+        })
+
+        await axios.post('/api/save-teams-players', {teams: payload});
 
         alert('Teams and players saved successfully!');
     } catch (error) {
@@ -52,57 +53,19 @@ async function saveTeams() {
 </script>
 
 <template>
-    <div class="flex justify-center">
-
-        <div class="w-2/3 h-full">
-            <div class="flex justify-between">
-                <h2 class="text-lg font-semibold">Players</h2>
-                <button class="bg-indigo-500 p-2 text-white mt-2 rounded-md" @click="saveTeams">
-                    Save
-                </button>
-            </div>
-            <div class="w-full h-1/2 p-4">
-                <draggable
-                    v-model="players"
-                    item-key="id"
-                    group="teams"
-                    tag="div"
-                    class="flex flex-wrap"
-                >
-                    <template #item="{ element, index }" :key="element.id">
-                        <SinglePlayer
-                            :key="element.id"
-                            :index="index"
-                            :player="element"
-                            class="border p-4 bg-gray-50"
-                        />
-                    </template>
-                </draggable>
-            </div>
-            <div  v-if="teams.length" class="h-1/2">
-                <h2 class="text-lg font-semibold">Teams</h2>
-                <div class="flex flex-wrap gap-4">
-                    <div
-                        v-for="(team, index) in teams"
-                        :key="team.id"
-                        class="p-4 border rounded shadow-sm bg-gray-50 h-full flex-1  min-h-1/2"
-                    >
-                        <div class="font-semibold h-full border min-h-96 p-4">
-                            {{ team.name }}
-                            <draggable
-                                v-model="team.players"
-                                group="teams"
-                                item-key="id"
-                                >
-                                <template #item="{ element }">
-                                    <SingleTeam :key="element.id" :team="element" />
-                                </template>
-                            </draggable>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="container h-full mx-auto p-4">
+        <div class="flex justify-between mb-4 items-center">
+            <h2 class="text-lg font-semibold">Players</h2>
+            <button class="bg-indigo-500 p-2 text-white mt-2 rounded-md" @click="saveTeams">
+                Save
+            </button>
         </div>
 
+        <div class="flex flex-col lg:flex-row h-screen">
+            <div class="h-full flex lg:flex-auto flex-col gap-y-10">
+                <PlayersList v-model="players" class="bg-gray-50 min-h-[200px] p-2 rounded-md "/>
+                <TeamList v-if="teams.length" v-model="teams" class="h-1/2 min-h-[100px]"/>
+            </div>
+        </div>
     </div>
 </template>

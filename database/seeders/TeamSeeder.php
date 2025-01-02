@@ -13,6 +13,7 @@ class TeamSeeder extends Seeder
      */
     public function run(): void
     {
-        Team::factory(2)->create();
+        Team::factory()->create(["name" => "Team A"]);
+        Team::factory()->create(["name" => "Team B"]);
     }
 }

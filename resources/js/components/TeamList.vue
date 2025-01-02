@@ -1,35 +1,46 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import SingleTeam from './SingleTeam.vue'
+import { computed } from 'vue'
+import SinglePlayer from './SinglePlayer.vue'
 import draggable from 'vuedraggable'
-import axios from 'axios'
 
 const emit = defineEmits(['drop'])
 
-defineProps(['teams'])
+const props = defineProps({
+    modelValue: {
+        type: Array,
+        default: []
+    }
+})
+
+const teams = computed({
+    get: () => props.modelValue,
+    set: (val) => emit('update:modelValue', val)
+})
+
 </script>
 
 <template>
-    <div>
+    <div class="h-1/2">
         <h2 class="text-lg font-semibold">Teams</h2>
-        <div class="flex flex-wrap gap-4">
-            <div
-                v-for="(team, index) in teams"
-                :key="team.id"
-                class="p-4 border rounded shadow-sm bg-gray-50 h-96 flex-1"
-            >
-                <h3 class="font-semibold">{{ team.name }}</h3>
-                <draggable
-                    v-model="team.players"
-                    group="teams"
-                    item-key="id"
-                    @change="(event) => emit('drop', event)"
+            <div class="flex flex-wrap gap-4">
+                <div
+                    v-for="(team, index) in teams"
+                    :key="team.id"
+                    class="p-4 border rounded shadow-sm bg-gray-50 h-full flex-1  min-h-1/2"
                 >
-                    <template #item="{ element }">
-                        <SingleTeam :player="element" />
-                    </template>
-                </draggable>
+                    <div class="font-semibold h-full border min-h-96 p-4">
+                        {{ team.name }}
+                        <draggable
+                            v-model="team.players"
+                            group="teams"
+                            item-key="id"
+                        >
+                            <template #item="{ element }">
+                                <SinglePlayer :key="element.id" :player="element" />
+                            </template>
+                        </draggable>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 </template>

@@ -17,9 +17,9 @@ class PlayerFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name(), // Random name
-            'email' => $this->faker->unique()->safeEmail(), // Unique email
-            'date_of_birth' => $this->faker->date('Y-m-d', '2005-12-31'), // Random date of birth
+            'name' => $this->faker->firstName(),
+            'email' => $this->faker->unique()->safeEmail(),
+            'date_of_birth' => $this->faker->date('Y-m-d', '2005-12-31'),
         ];
     }
 }
