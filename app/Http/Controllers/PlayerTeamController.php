@@ -14,14 +14,17 @@ class PlayerTeamController extends Controller
         $request->validate([
             'teams' => 'required|array',
             'teams.*.team_id' => 'required|exists:teams,id',
-            'teams.*.players' => 'required|array',
-            'teams.*.players.*.player_id' => 'required|exists:players,id',
-            'teams.*.players.*.sort_order' => 'required|integer',
+            'teams.*.players' => 'array',
         ]);
 
         foreach ($request->teams as $teamData) {
             $team = Team::find($teamData['team_id']);
 
+            if(!$teamData['players']) {
+                // If no players are sent, detach all players from the team
+                $team->players()->detach();
+                continue;
+            }
             $syncData = [];
             foreach ($teamData['players'] as $playerData) {
                 $syncData[$playerData['player_id']] = ['sort_order' => $playerData['sort_order']];
